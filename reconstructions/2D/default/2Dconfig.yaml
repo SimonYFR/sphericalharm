@@ -1,0 +1,8 @@
+parameters:
+  Lmax: 12
+  nphi: 1000
+  ntheta: 1 # fix to 0 (no z orientation)
+form:
+  lx: 150 # size box
+  ly: 150 # size box
+  lz: 150 # size box

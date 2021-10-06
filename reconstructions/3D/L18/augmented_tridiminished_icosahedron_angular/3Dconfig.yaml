@@ -1,0 +1,11 @@
+form:
+  L: !!python/tuple
+  - 46
+  - 46
+  - 46
+parameters:
+  Lmax: 18
+  nphi: 23
+  ntheta: 23
+  ratio_points: 0.1
+  selection: surface

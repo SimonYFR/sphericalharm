@@ -1,0 +1,6 @@
+parameters:
+  Lmax: 18
+  ratio_points: 0.1
+  selection: 'surface'
+form:
+  L: None
