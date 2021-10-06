@@ -28,16 +28,23 @@ class SphericalHarmonicsDecomposer(object):
     # Empty initialisation
     self.n_points             = 0
     self.phi, self.theta      = None, None
-    self.xi, self.yi, self.zi, self.ri = None, None, None, None
+    self.xi, self.yi, self.zi = None, None, None
 
     self.sphere_points       = None
     self.sphere_indices      = None
     self.selected_points_idx = None
 
+<<<<<<< HEAD:modules/RadialDecomposer.py
     self.Y                                                 = None
     self.cx,   self.cy,   self.cz, self.cr                 = None, None, None, None
     self.x_Yc, self.y_Yc, self.z_Yc, self.r_Yc             = None, None, None, None
     self.selected_points_reconstruction                    = None
+=======
+    self.Y                              = None
+    self.cx,   self.cy,   self.cz       = None, None, None
+    self.x_Yc, self.y_Yc, self.z_Yc     = None, None, None
+    self.selected_points_reconstruction = None
+>>>>>>> 51f84f7310568299c10ff354baeb47c557d0e044:modules/Decomposer.py
 
     self.RY                            = None
     self.rr                            = None
@@ -194,7 +201,6 @@ class SphericalHarmonicsDecomposer(object):
     self.compute_selected_points_reconstruction(scale=scale)
     self.compute_full_reconstruction(scale=scale)
 
-
   def set_selected_points(self,nphi=25,ntheta=25,points_selection='sphere'):
     
     pi = np.pi
@@ -269,7 +275,6 @@ class SphericalHarmonicsDecomposer(object):
 
     self.xi = self.bx[self.selected_points_idx]
     self.yi = self.by[self.selected_points_idx]
-    self.ri = self.br[self.selected_points_idx]
     if self.dim == 3: self.zi = self.bz[self.selected_points_idx]
 
   def check_NaN(self,array,title):
@@ -304,14 +309,9 @@ class SphericalHarmonicsDecomposer(object):
       #Pml(1,:), Pml(2,:), ..., Pml(l+1,:) = P^0_l(x), P^1_l(x), ..., P^l_l^(x)
       for m in range(-l,l+1):
 
-        if (m<=0): 
-          
-          acc=1
-          for k in range (l+m+1,l-m):
-            acc=acc*(k)
-          prod, sign = (-1)**m/acc, -1
-          
+        if (m<=0): prod, sign = (-1)**m/np.arange((l+m+1),(l-m)).prod(), -1
         else     : prod, sign = 1, 1
+        
         myPml=Pml[sign*m,:]*prod
 
         self.check_NaN(myPml,'myPml')
@@ -320,16 +320,8 @@ class SphericalHarmonicsDecomposer(object):
 
         #print(f"  * l:{l}/{Lmax} | m:{m}",end='\r')
 
-        if (m<=0): 
-          acc=1
-          for k in range (l+m+1,l-m):
-            acc=acc*(k)
-          nm = acc
-        else     : 
-          acc=1
-          for k in range (l-m+1,l+m):
-            acc=acc*(k)
-          nm = 1/acc
+        if (m<=0): nm = np.arange((l+m+1),(l-m)).prod()
+        else     : nm = 1/np.arange((l-m+1),(l+m)).prod()
         
         Y[:,j] = myPml.T * np.exp((1.j) * m * self.phi) * np.sqrt(np.complex((2 * l + 1) / (4 * pi) * nm))
   
@@ -342,8 +334,14 @@ class SphericalHarmonicsDecomposer(object):
       #print(f"  * {title} dimension ...")
       return LA.lstsq(Y,x, rcond=None)[0]
 
+<<<<<<< HEAD:modules/RadialDecomposer.py
     self.cr = least_square(Y, self.ri,'r')
 
+=======
+    self.cx = least_square(Y, self.xi,'x')
+    self.cy = least_square(Y, self.yi,'y')
+    if self.dim == 3: self.cz = least_square(Y, self.zi,'z')
+>>>>>>> 51f84f7310568299c10ff354baeb47c557d0e044:modules/Decomposer.py
 
     self.Y = Y
 
@@ -379,27 +377,15 @@ class SphericalHarmonicsDecomposer(object):
       for m in range(-l,l+1):
         #print(f"  * l:{l}/{Lmax} | m:{m}",end='\r')
 
-        if (m<=0): 
-          acc=1
-          for k in range (l+m+1,l-m):
-            acc=acc*(k)
-          prod, sign = (-1)**m/acc, -1
+        if (m<=0): prod, sign = (-1)**m/np.arange((l+m+1),(l-m)).prod(), -1
         else     : prod, sign = 1, 1
         
         myPml=Rml0[sign*m,:]*prod
         
         j=l**2+l+m
 
-        if (m<=0): 
-          acc=1
-          for k in range (l+m+1,l-m):
-            acc=acc*(k)
-          nm = acc
-        else     : 
-          acc=1
-          for k in range (l-m+1,l+m):
-            acc=acc*(k)
-          nm = 1/acc
+        if (m<=0): nm = np.arange((l+m+1),(l-m)).prod()
+        else     : nm = 1/np.arange((l-m+1),(l+m)).prod()
         
         RY[:,j]=myPml.T * np.exp((1.j) * m * rphi) * np.sqrt(np.complex((2 * l + 1) / (4 * pi) * nm))
 
@@ -431,8 +417,26 @@ class SphericalHarmonicsDecomposer(object):
 
   def compute_full_reconstruction(self,c=np.array([None]),scale=1.):
 
+<<<<<<< HEAD:modules/RadialDecomposer.py
     rs=np.real(self.RY.dot(self.cr)).reshape(self.L)
     self.form_reconstruction = (rs>self.rr)
     
 
 
+=======
+    if c.all() == None:
+      if self.dim == 2: cx, cy     = self.cx * scale, self.cy*scale
+      if self.dim == 3: cx, cy, cz = self.cx * scale, self.cy*scale, self.cz*scale
+    else:
+      if self.dim == 2: cx, cy     = c[0]*scale, c[1]*scale
+      if self.dim == 3: cx, cy, cz = c[0]*scale, c[1]*scale, c[2]*scale
+
+    self.x_RYc = (self.RY.dot(cx)).reshape(self.L)
+    self.y_RYc = (self.RY.dot(cy)).reshape(self.L)
+    if self.dim == 3: self.z_RYc = (self.RY.dot(cz)).reshape(self.L)
+
+    if self.dim == 2: rs = np.sqrt(self.x_RYc**2 + self.y_RYc**2)
+    if self.dim == 3: rs = np.sqrt(self.x_RYc**2 + self.y_RYc**2+self.z_RYc**2)
+    
+    self.form_reconstruction = np.real(rs>self.rr)
+>>>>>>> 51f84f7310568299c10ff354baeb47c557d0e044:modules/Decomposer.py
