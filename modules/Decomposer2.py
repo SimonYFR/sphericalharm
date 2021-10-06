@@ -28,16 +28,16 @@ class SphericalHarmonicsDecomposer(object):
     # Empty initialisation
     self.n_points             = 0
     self.phi, self.theta      = None, None
-    self.xi, self.yi, self.zi = None, None, None
+    self.xi, self.yi, self.zi, self.ri = None, None, None, None
 
     self.sphere_points       = None
     self.sphere_indices      = None
     self.selected_points_idx = None
 
-    self.Y                              = None
-    self.cx,   self.cy,   self.cz       = None, None, None
-    self.x_Yc, self.y_Yc, self.z_Yc     = None, None, None
-    self.selected_points_reconstruction = None
+    self.Y                                      = None
+    self.cx,   self.cy,   self.cz, self.cr     = None, None, None, None
+    self.x_Yc, self.y_Yc, self.z_Yc             = None, None, None
+    self.selected_points_reconstruction         = None
 
     self.RY                            = None
     self.rr                            = None
@@ -194,6 +194,7 @@ class SphericalHarmonicsDecomposer(object):
     self.compute_selected_points_reconstruction(scale=scale)
     self.compute_full_reconstruction(scale=scale)
 
+
   def set_selected_points(self,nphi=25,ntheta=25,points_selection='sphere'):
     
     pi = np.pi
@@ -268,6 +269,7 @@ class SphericalHarmonicsDecomposer(object):
 
     self.xi = self.bx[self.selected_points_idx]
     self.yi = self.by[self.selected_points_idx]
+    self.ri = self.br[self.selected_points_idx]
     if self.dim == 3: self.zi = self.bz[self.selected_points_idx]
 
   def check_NaN(self,array,title):
@@ -302,9 +304,14 @@ class SphericalHarmonicsDecomposer(object):
       #Pml(1,:), Pml(2,:), ..., Pml(l+1,:) = P^0_l(x), P^1_l(x), ..., P^l_l^(x)
       for m in range(-l,l+1):
 
-        if (m<=0): prod, sign = (-1)**m/np.arange((l+m+1),(l-m)).prod(), -1
+        if (m<=0): 
+          
+          acc=1
+          for k in range (l+m+1,l-m):
+            acc=acc*(k)
+          prod, sign = (-1)**m/acc, -1
+          
         else     : prod, sign = 1, 1
-        
         myPml=Pml[sign*m,:]*prod
 
         self.check_NaN(myPml,'myPml')
@@ -313,8 +320,16 @@ class SphericalHarmonicsDecomposer(object):
 
         #print(f"  * l:{l}/{Lmax} | m:{m}",end='\r')
 
-        if (m<=0): nm = np.arange((l+m+1),(l-m)).prod()
-        else     : nm = 1/np.arange((l-m+1),(l+m)).prod()
+        if (m<=0): 
+          acc=1
+          for k in range (l+m+1,l-m):
+            acc=acc*(k)
+          nm = acc
+        else     : 
+          acc=1
+          for k in range (l-m+1,l+m):
+            acc=acc*(k)
+          nm = 1/acc
         
         Y[:,j] = myPml.T * np.exp((1.j) * m * self.phi) * np.sqrt(np.complex((2 * l + 1) / (4 * pi) * nm))
   
@@ -329,6 +344,8 @@ class SphericalHarmonicsDecomposer(object):
 
     self.cx = least_square(Y, self.xi,'x')
     self.cy = least_square(Y, self.yi,'y')
+    self.cr = least_square(Y, self.ri,'r')
+
     if self.dim == 3: self.cz = least_square(Y, self.zi,'z')
 
     self.Y = Y
@@ -365,15 +382,27 @@ class SphericalHarmonicsDecomposer(object):
       for m in range(-l,l+1):
         #print(f"  * l:{l}/{Lmax} | m:{m}",end='\r')
 
-        if (m<=0): prod, sign = (-1)**m/np.arange((l+m+1),(l-m)).prod(), -1
+        if (m<=0): 
+          acc=1
+          for k in range (l+m+1,l-m):
+            acc=acc*(k)
+          prod, sign = (-1)**m/acc, -1
         else     : prod, sign = 1, 1
         
         myPml=Rml0[sign*m,:]*prod
         
         j=l**2+l+m
 
-        if (m<=0): nm = np.arange((l+m+1),(l-m)).prod()
-        else     : nm = 1/np.arange((l-m+1),(l+m)).prod()
+        if (m<=0): 
+          acc=1
+          for k in range (l+m+1,l-m):
+            acc=acc*(k)
+          nm = acc
+        else     : 
+          acc=1
+          for k in range (l-m+1,l+m):
+            acc=acc*(k)
+          nm = 1/acc
         
         RY[:,j]=myPml.T * np.exp((1.j) * m * rphi) * np.sqrt(np.complex((2 * l + 1) / (4 * pi) * nm))
 
@@ -425,4 +454,7 @@ class SphericalHarmonicsDecomposer(object):
     if self.dim == 2: rs = np.sqrt(self.x_RYc**2 + self.y_RYc**2)
     if self.dim == 3: rs = np.sqrt(self.x_RYc**2 + self.y_RYc**2+self.z_RYc**2)
     
-    self.form_reconstruction = np.real(rs>self.rr)
+    self.form_reconstruction = (rs>self.rr)
+    
+
+
