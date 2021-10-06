@@ -5,7 +5,7 @@ form:
   - 46
 parameters:
   Lmax: 18
-  nphi: 21
-  ntheta: 21
+  nphi: 25
+  ntheta: 25
   ratio_points: 0.1
   selection: surface
