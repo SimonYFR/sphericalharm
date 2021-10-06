@@ -34,17 +34,10 @@ class SphericalHarmonicsDecomposer(object):
     self.sphere_indices      = None
     self.selected_points_idx = None
 
-<<<<<<< HEAD:modules/RadialDecomposer.py
-    self.Y                                                 = None
-    self.cx,   self.cy,   self.cz, self.cr                 = None, None, None, None
-    self.x_Yc, self.y_Yc, self.z_Yc, self.r_Yc             = None, None, None, None
-    self.selected_points_reconstruction                    = None
-=======
     self.Y                              = None
     self.cx,   self.cy,   self.cz       = None, None, None
     self.x_Yc, self.y_Yc, self.z_Yc     = None, None, None
     self.selected_points_reconstruction = None
->>>>>>> 51f84f7310568299c10ff354baeb47c557d0e044:modules/Decomposer.py
 
     self.RY                            = None
     self.rr                            = None
@@ -334,14 +327,9 @@ class SphericalHarmonicsDecomposer(object):
       #print(f"  * {title} dimension ...")
       return LA.lstsq(Y,x, rcond=None)[0]
 
-<<<<<<< HEAD:modules/RadialDecomposer.py
-    self.cr = least_square(Y, self.ri,'r')
-
-=======
     self.cx = least_square(Y, self.xi,'x')
     self.cy = least_square(Y, self.yi,'y')
     if self.dim == 3: self.cz = least_square(Y, self.zi,'z')
->>>>>>> 51f84f7310568299c10ff354baeb47c557d0e044:modules/Decomposer.py
 
     self.Y = Y
 
@@ -399,15 +387,21 @@ class SphericalHarmonicsDecomposer(object):
 
     print(scale)
 
+    if c.all() == None:
+      if self.dim == 2: cx, cy     = self.cx * scale, self.cy*scale
+      if self.dim == 3: cx, cy, cz = self.cx * scale, self.cy*scale, self.cz*scale
+    else:
+      if self.dim == 2: cx, cy     = c[0]*scale, c[1]*scale
+      if self.dim == 3: cx, cy, cz = c[0]*scale, c[1]*scale, c[2]*scale
+
+    self.x_Yc = np.real(self.b[0] + self.Y.dot(cx))
+    self.y_Yc = np.real(self.b[1] + self.Y.dot(cy))
+    if self.dim == 3: self.z_Yc = np.real(self.b[2] + self.Y.dot(cz))
+
     if scale > 1.:
       r = np.zeros((80,80))
     else:
       r = np.zeros(self.L)
-
-    self.r_Yc = np.real(self.Y.dot(self.cr)) 
-    self.x_Yc = self.r_Yc * np.sin(self.theta) * np.cos(self.phi)
-    self.y_Yc = self.r_Yc * np.sin(self.theta) * np.sin(self.phi)
-    if self.dim == 3: self.z_Yc = self.r_Yc * np.cos(self.theta)
 
     for i in range(self.n_points):
       if self.dim == 2: r[int(self.y_Yc[i])][int(self.x_Yc[i])] = 1
@@ -417,13 +411,6 @@ class SphericalHarmonicsDecomposer(object):
 
   def compute_full_reconstruction(self,c=np.array([None]),scale=1.):
 
-<<<<<<< HEAD:modules/RadialDecomposer.py
-    rs=np.real(self.RY.dot(self.cr)).reshape(self.L)
-    self.form_reconstruction = (rs>self.rr)
-    
-
-
-=======
     if c.all() == None:
       if self.dim == 2: cx, cy     = self.cx * scale, self.cy*scale
       if self.dim == 3: cx, cy, cz = self.cx * scale, self.cy*scale, self.cz*scale
@@ -439,4 +426,3 @@ class SphericalHarmonicsDecomposer(object):
     if self.dim == 3: rs = np.sqrt(self.x_RYc**2 + self.y_RYc**2+self.z_RYc**2)
     
     self.form_reconstruction = np.real(rs>self.rr)
->>>>>>> 51f84f7310568299c10ff354baeb47c557d0e044:modules/Decomposer.py
